@@ -1,0 +1,225 @@
+=head1 Idea
+
+Pass the options to the rules. This would let me pass the git repository
+path, for example, to a given task start. This path (and the path's commit
+hash) can be stored as metadata for the task. This suggests, therefore, that
+I should allow myself to store arbitrary metadata with each task. This would
+lead to a proliferation of data, and analysis of that data.
+
+Example: --completed sent to stop command to indicate that the task has
+been completed, which may effect points and scoring.
+
+Example: --repo=/path/to/repo to track word changes.
+
+=head1 Thoughts
+
+These are my thoughts for my most ambitious planning system to date. The
+system synthesizes the most useful aspects of my previous tools, including
+time tracking, planning, scriptability, and gamification. The hope is that I
+will use Perl hacking and conference-going as a reward. This should
+encourage me to track my time and, presuming I make plans that align with
+what's important, it will also reward me for doing what is most important.
+
+Features include:
+
+=over
+
+=item Scriptable
+
+Build a scriptable system similar to C<priorities> so that I can make
+rewards precise. For example, I may give an extra award for starting my run
+before 6:15am, or for stopping work before 9 o'clock.	
+
+=item Reward optimal behavior, and plans
+
+I should build a number of reward mechanisms into the reward system that do
+not simply heap on more reward for more time, word count, etc. Rather, it
+should reward me for optimal time, word count, etc. This is particularly
+important for my plans themselves, which should focus on keeping line and/or
+word counts to manageable levels.
+
+=item Two kinds of reward points
+
+One kind that is "instantly" redeamable, and another kind that is a savings
+account.
+
+=item General reward rule
+
+1 hour of good work = 1 minute of "instantly" redeamable, and one minute
+into the savings account
+
+=item Binging
+
+After my minutes are eaten up from the "instant" account, it eats into the
+savings account at 2x.
+
+=item Guilty pleasure
+
+instant = Perl programming; savings = Perl conferences :-)
+
+=back
+
+Potential game ideas that I haven't yet figured out how to include:
+
+=over
+
+=item social
+
+How can I make this social? Should I tie it to IRC announcements?
+
+=item badges
+
+Should I give myself badges?
+
+=item progress bars
+
+Can I include these? How?
+
+=item visual feedback
+
+I plan to have printed messages from rules, but what about graphical
+feedback? I am considering letting rules pop-up a Prima message window,
+possibly with charts, etc.
+
+=item Gambling credits
+
+This interesting idea parallels a slot machine. Rather than getting a quarter
+as a reward, you get a quarter as something you can insert into a slot
+machine. This may be a good reward mechanism when I am either just below or
+just past optimal behavior. (Or, I may be able to make everything a gamble,
+and simply optimize the odds when I hit the optimal situation.)
+
+http://www.nirandfar.com/2012/03/want-to-hook-your-users-drive-them-crazy.html
+
+=item more ideas
+
+See http://www.gamification.co/2013/01/02/how-to-gamify-your-goals-a-step-by-step-guide/
+
+=back
+
+=head1 Command line interface
+
+The command line tool will be gp (or game-plan if gp already exists in the
+path). For me, gp will merge the functionality of C<mantsht>, C<antsht>, and
+C<plan> while providing features inspired by C<priorities>.
+
+=head2 status
+
+Displays the current task, the task rules currently applying to this task,
+the points accumulated and/or lost for this task, any other task-specific
+notes, and the current points accumulated since the most recent archive.
+
+=head2 Time Sheet
+
+Time tracking is managed in a long-winded text file and archived in a
+separate, more concise text file for long-term, deep analysis. The file with
+current information is probably going to be a JSON file, for ease of editing,
+while the long-term file is likely to be a more compact format (for example,
+storing Unix time stamps instead of date/time entries). It will also include
+the score credited to the task.
+
+=over
+
+=item start
+
+Starts a task. Can refer to the most recent listing (by number), or can
+describe any task. Can set "--time=10:30am" and "--date=yyyy-mm-dd".
+
+=item stop
+
+Stops the current task, storing the stop time. Can also take times and
+dates.
+
+=item restart
+
+Resets the task's start time for a new time. Can set "--time" and "--date".
+
+=item archive
+
+Computes the score of all time tracked in the text file up to the given date
+and time. (Default time is 11:59:59pm.) Valid arguments include "--Monday",
+"--Tuesday", etc, which archives everything up through the most recent
+occurrence of the given day. Other options include "--yesterday", as well
+as "--time=..."
+
+=back
+
+=head2 Planning and Goals
+
+Plans and goals are tracked in Topic files. Topic files are archived with
+every single edit using git. The calculation of points for a set of tracked
+tasks is matched to the state of the plans that would have been in place at
+the time of the tasks.
+
+All of these commands make annotations in the time sheet so that I can
+easily determine how much time I spent on planning-related tasks each day.
+
+=item new <topic>
+
+Creates a new topic or module with the given topic name. Modules should have
+a .pm extension.
+
+=item topics
+
+Lists the current set of topics (but not modules)
+
+=item modules
+
+Lists the current set of modules (but not topics)
+
+=item module <module>
+
+Edit the named module
+
+=item long <topic>
+
+Edit the long-term plans for a given topic.
+
+=item short <topic>
+
+Edit the short-term plans for a given topic.
+
+=item remove <topic/module>
+
+Remove the named topic or module file.
+
+=item today
+
+Creates or edits today's to do list, which is used mostly in the next
+command.
+
+=item list
+
+Lists available tasks, including their rewards, and any additional list note
+for the task. Can filter and change sort order. Ordering is optional and can
+include "--by=points", "--by=priority", "--by=alpha", "--by=default" (no
+sort; listed in the order they appeared). Filters can be "--match=<regex>",
+"--topic=Topic1,Topic2,...", "--today" (i.e. "--topic=Today"),
+"--points=<range>", and "--priorities=<range>. The Today.topic file, if it
+exists, is special, and is used for daily planning. The most recently listed
+list is cached so that it can be referenced by C<start>.
+
+=back
+
+=head1 Scripting
+
+Task rules can indicate a good many things. They can have complex scoring
+rules along with custom list and status notes. They need to have a good and
+useful description that can be entered into the time sheet. They need to
+know if they should show up in the list of suggestions for today's to do
+list. Common functionality for these tasks can be provided in modules, which
+are also versioned along with the topics.
+
+=head2 Implementation Notes
+
+I can handle various versions by creating different hash-specific packages
+and eval'ing all of the code from all modules and task lists into that
+package.
+
+=head2 Meta
+
+I should have a Meta topic, which includes goals and rules for my planning.
+In particular, it should have a reward system for topic files that are a
+good length---not too long and not too short.
+
+=cut

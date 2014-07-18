@@ -1,0 +1,12 @@
+#!/usr/bin/env perl
+
+use App::gp;
+App::gp->run;
+
+__END__
+
+=head1 NAME
+
+gp - a command-line tool for gamifying personal planning and time management
+
+=cut
