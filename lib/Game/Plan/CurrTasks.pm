@@ -140,7 +140,12 @@ sub commit {
 	delete $self->[0]{_backup};
 	
 	# Mark the task as completed
-	App::gp->curr_rules->mark_as_completed($self->[0]);
+	if ($self->[0]{finished}) {
+		App::gp->curr_rules->mark_as_completed($self->[0], '+');
+	}
+	elsif ($self->[0]{canceled}) {
+		App::gp->curr_rules->mark_as_completed($self->[0], 'x');
+	}
 	
 	return $self->[0];
 }

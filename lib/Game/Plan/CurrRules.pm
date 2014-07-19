@@ -56,9 +56,11 @@ my @default_rule_parsers = (
 	sub {
 		return unless /^(\s*)\[(\d+| )\]/;
 		my $entry = $_;
-		my $offset = length($1) + 1;
-		my $width = length($2);
 		
+		# Capture the bracket position if the bracket is empty.
+		my $bracket_string = '';
+		$bracket_string = 'bracket_offset => ' . (length($1) + 1) . ', '
+			if $2 eq ' ';
 		
 		# Strip off the skip
 		$entry =~ s/^\s*\[(\d+| )\]//;
@@ -78,7 +80,7 @@ my @default_rule_parsers = (
 		$entry =~ s/\s+$//;
 		
 		return "Game::Plan::Task->new(description => q{$entry}, "
-			. "bracket_width => $width, bracket_offset => $offset, "
+			. $bracket_string
 			. "when => '$when', skip => $skip, defaults => \$defaults, $args)"
 	},
 	# Rules
@@ -199,10 +201,12 @@ sub parse_topic {
 						next unless $thing->$_isa('Game::Plan::Rule');
 						# Add the thing to the appropriate list
 						if ($thing->isa('Game::Plan::Task')) {
-							# Also store the seek location for this thing,
-							# in case it gets finished.
+							# If this is a mark-off-able task, store the
+							# seek location:
+							$thing->{bracket_offset}
+								+= tell($in_fh) - length($line)
+								if $thing->{bracket_offset};
 							push @$tasks, $thing;
-							$thing->{seek_pos} = tell($in_fh) - length($line);
 						}
 						elsif ($thing->isa('Game::Plan::Defaults')) {
 							push @$defaults, $thing;
@@ -443,11 +447,11 @@ sub get_list {
 }
 
 sub mark_as_completed {
-	my ($self, $task) = @_;
+	my ($self, $task, $mark) = @_;
 	
 	# Run through all the tasks and mark any that match
 	for my $task_rule (@{$self->{tasks}}) {
-		$task_rule->mark_as_completed($task)
+		$task_rule->mark_as_completed($task, $mark)
 			if $task_rule->matches($task->{description});
 	}
 }
@@ -810,7 +814,9 @@ sub matches {
 }
 
 sub mark_as_completed {
-	my ($self, $task) = @_;
+	my ($self, $task, $mark) = @_;
+	
+	return unless $self->{bracket_offset};
 	
 	# Make changes to the topics that get recorded
 	Game::Plan::Revision::do_and_commit {
@@ -818,9 +824,8 @@ sub mark_as_completed {
 			warn "Unable to mark task in $self->{file} as completed\n";
 			return;
 		};
-		sysseek $fh, $self->{bracket_offset} + $self->{seek_pos}, 0;
-		my $to_write = '+]     ';
-		syswrite $fh, $to_write, $self->{bracket_width} + 1;
+		sysseek $fh, $self->{bracket_offset}, 0;
+		syswrite $fh, $mark, 1;
 		close $fh;
 	};
 }

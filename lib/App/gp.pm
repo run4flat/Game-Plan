@@ -47,7 +47,7 @@ sub stopstatus_options {
 			[ 'finished|f', 'completed, award points' ],
 			[ 'paused|p', 'temporarily' ],
 			[ 'interupted|i', 'temporarily' ],
-			[ 'canceled|c', 'not going to finish, award sympathy points' ],
+			[ 'canceled|x', 'not going to finish, award sympathy points' ],
 			[ 'postponed|t', 'will resume on a future date' ],
 		],
 	}];
