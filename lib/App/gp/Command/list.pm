@@ -14,14 +14,14 @@ sub description { '    List, filter, and sort tasks that need doing' }
 
 sub opt_spec {
 	return (
+		['append=s', 'append the resulting task list to the given topic file'],
 		['by=s', 'sort order, one of points, priority, alpha, default'],
 		['pattern|p=s', 'pattern to match against the description'],
-		['topics=s', 'only show tasks from the given topics'],
 		['point_range=s', 'limit tasks to fall within the point range (numbers separated by dashes)'],
 		['priority_range=s', 'limit tasks to fall within the priority range (numbers separated by dashes)'],
-		['recent|r=i', 'list recently completed tasks (other options ignored)'],
+		['recent|r:i', 'list recently completed tasks (other options ignored)'],
 		['today|t', 'list tasks from today'],
-		['append=s', 'append the resulting task list to the given topic file'],
+		['topics=s', 'only show tasks from the given topics'],
 	);
 }
 
@@ -29,12 +29,13 @@ sub execute {
 	my ($self, $opt, $args) = @_;
 	
 	my @task_descriptions;
-	if ($opt->recent) {
+	if (defined (my $N_to_list = $opt->recent)) {
+		$N_to_list ||= 5;
 		my $tasks = App::gp->curr_tasks;
 		
 		# list recent tasks
 		my @tasks;
-		for (my $i = 0; $i < $opt->recent; $i++) {
+		for (my $i = 0; $i < $N_to_list; $i++) {
 			last unless $tasks->[$i];
 			push @tasks, $tasks->[$i]{description};
 			printf "  %2d: $tasks->[$i]{description}\n", $i+1;
@@ -60,9 +61,8 @@ sub execute {
 		$options{priority_range} = [split /,/, $opt->priority_range]
 			if $opt->priority_range;
 		
-		# The default behavior is to list the tasks from Today's plans. If there
-		# are no options at all, then work with the Today topic (if said topic
-		# exists).
+		# Work with the Today topic if the -t flag was invoked and said topic
+		# exists.
 		App::gp::Files::do_in_topics {
 			$options{topics} = ['Today'] if $opt->today and -f 'Today.topic';
 		};
