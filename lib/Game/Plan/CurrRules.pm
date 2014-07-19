@@ -79,7 +79,7 @@ my @default_rule_parsers = (
 		
 		return "Game::Plan::Task->new(description => q{$entry}, "
 			. "bracket_width => $width, bracket_offset => $offset, "
-			. "when => '$when', skip => $skip, $args)"
+			. "when => '$when', skip => $skip, defaults => \$defaults, $args)"
 	},
 	# Rules
 	sub {
@@ -89,7 +89,7 @@ my @default_rule_parsers = (
 			# Add the pattern argument
 			$args = "pattern => qr$pattern, $args";
 			# Return the constructor call
-			return "Game::Plan::${class}->new($args)";
+			return "Game::Plan::${class}->new(defaults => \$defaults, $args)";
 		}
 	},
 );
@@ -142,7 +142,10 @@ sub parse_topic {
 	# I need this common functionality, but I want to make sure that the
 	# code has access to the different arrays. Thus, it is a lexical subref
 	# rather than a normal function.
-	my (@things, @tasks, @defaults, @rules);
+	my $defaults = $self->{defaults};
+	my $tasks = $self->{tasks};
+	my $rules = $self->{rules};
+	my @things;
 	my $do_parse_eval = sub {
 		my $to_eval = shift;
 		# Evaluate everything in the base package.
@@ -194,22 +197,18 @@ sub parse_topic {
 					for my $thing (@things) {
 						# Make sure it's derived from our base class
 						next unless $thing->$_isa('Game::Plan::Rule');
-						# Apply any defaults to the things
-						for my $default (@defaults) {
-							$default->apply_defaults($thing);
-						}
 						# Add the thing to the appropriate list
 						if ($thing->isa('Game::Plan::Task')) {
 							# Also store the seek location for this thing,
 							# in case it gets finished.
-							push @tasks, $thing;
+							push @$tasks, $thing;
 							$thing->{seek_pos} = tell($in_fh) - length($line);
 						}
-						elsif ($thing->isa('Game::Plan::Default')) {
-							push @defaults, $thing;
+						elsif ($thing->isa('Game::Plan::Defaults')) {
+							push @$defaults, $thing;
 						}
 						else {
-							push @rules, $thing;
+							push @$rules, $thing;
 						}
 					}
 				}
@@ -218,11 +217,6 @@ sub parse_topic {
 	} # while(<$in_fh>)
 	close $in_fh;
 	die "Failed to parse topic $topic_file\n" if $parse_failed;
-	
-	# Otherwise, push the collection of rules onto our lists
-	push @{$self->{rules}}, @rules;
-	push @{$self->{defaults}}, @defaults;
-	push @{$self->{tasks}}, @tasks;
 }
 
 my @stop_options;
@@ -473,6 +467,13 @@ sub new {
 		@_
 	}, $class;
 	
+	# Apply defaults
+	if (my $defaults = delete $self->{defaults}) {
+		for my $default (@$defaults) {
+			$default->apply_defaults($self);
+		}
+	}
+	
 	# Initialization
 	$self->init;
 	
@@ -579,15 +580,16 @@ our @ISA = qw(Game::Plan::Rule);
 
 sub apply_defaults {
 	my ($self, $new_rule) = @_;
-	return unless my $d = $new_rule->description;
-	return unless $self->matches($d);
+	# Only apply if we match the *description*, not the cobbled description
+	# that might be based on a pattern. The latter can self-match. D-:
+	return unless $self->matches($new_rule->{description} || '');
 	
 	# Run through all of the keys and assign them if they do not exist
 	# in the new rule (with the following handful of exceptions)
 	my %ignore = map { +$_ => 1 } qw (description pattern file line );
 	KEY: for my $k (keys %$self) {
 		next KEY if $ignore{$k};
-		$new_rule->{$k} = $self->{$k} unless exists $self->{$k};
+		$new_rule->{$k} = $self->{$k} unless exists $new_rule->{$k};
 	}
 }
 
