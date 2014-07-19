@@ -15,6 +15,7 @@ sub description { '    List, filter, and sort tasks that need doing' }
 sub opt_spec {
 	return (
 		['append=s', 'append the resulting task list to the given topic file'],
+		['at=s', 'get tasks applicable to the given time (default: now)'],
 		['by=s', 'sort order, one of points, priority, alpha, default'],
 		['pattern|p=s', 'pattern to match against the description'],
 		['point_range=s', 'limit tasks to fall within the point range (numbers separated by dashes)'],
@@ -66,6 +67,9 @@ sub execute {
 		App::gp::Files::do_in_topics {
 			$options{topics} = ['Today'] if $opt->today and -f 'Today.topic';
 		};
+		
+		# Set the time, if specified
+		$options{at} = $opt->{at} if exists $opt->{at};
 		
 		# Get the list of matching tasks
 		my ($task_rules, $points) = App::gp::curr_rules->get_list(%options);

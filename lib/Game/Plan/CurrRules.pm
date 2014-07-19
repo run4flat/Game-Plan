@@ -355,7 +355,7 @@ sub get_list {
 	
 	# Validate inputs: priority range (two-element array),
 	# point range (two-element array), topics (scalar|array),
-	# pattern (regex) 
+	# pattern (regex), at (time string)
 	for my $arg (qw(priority_range point_range)) {
 		if ($opts{$arg}) {
 			croak("$arg must be a two-element arrayref")
@@ -385,6 +385,12 @@ sub get_list {
 	}
 	croak('pattern must be a regex reference')
 		if $opts{pattern} and ref($opts{pattern}) ne ref(qr//);
+	if ($opts{at}) {
+		$opts{at} = Game::Plan::Timing::get_datetime($opts{at});
+	}
+	else {
+		$opts{at} = localtime;
+	}
 	
 	# Filter out the rules that do not claim to match
 	my @matches = grep { $_->get_list(%opts) } @{$self->{tasks}};
@@ -771,7 +777,7 @@ sub get_list {
 	# this task should be listed based on its own listing criterea (i.e.
 	# after and next conditions). Relative times should be taken with
 	# respect to the given time:
-	my $time = $opt{time} || localtime;
+	my $time = $opt{at};
 	my $day = $time - $time->sec - ONE_MINUTE * $time->min
 		- ONE_HOUR * $time->hour;
 	
