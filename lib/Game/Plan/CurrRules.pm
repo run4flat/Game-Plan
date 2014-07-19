@@ -607,12 +607,14 @@ sub init {
 	# Find the most recent copy of this task in the backlog, if we need to
 	# know that.
 	if ($self->{when} or $self->{skip}) {
-		my $tasks = App::gp->curr_tasks;
-		$self->{most_recent_match} = $tasks->find($self->{description});
-		my $start = $self->{most_recent_match}{start_time};
-		$self->{most_recent_day}
-			= $start - $start->sec - ONE_MINUTE * $start->min
-				- ONE_HOUR * $start->hour;
+		my $most_recent = App::gp->curr_tasks->find($self->{description});
+		if ($most_recent) {
+			$self->{most_recent_match} = $most_recent;
+			my $start = $most_recent->{start_time};
+			$self->{most_recent_day}
+				= $start - $start->sec - ONE_MINUTE * $start->min
+					- ONE_HOUR * $start->hour;
+		}
 	}
 	
 	# Skip should just be digits
