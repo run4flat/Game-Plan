@@ -709,7 +709,7 @@ sub parse_when {
 				return if $every_week and -1 == index($every_week,
 						Game::Plan::Timing::letter_from_day($time));
 				return $curr_subref->($time, $day);
-			} if defined $most_recent_day;
+			};
 		}
 		else {
 			# List on a given date. Make sure that the date parses, then add
