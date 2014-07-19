@@ -491,7 +491,10 @@ sub init {
 	$self->{pattern} ||= qr/^$self->{description}$/;
 }
 
-sub description  { return (shift)->{description} }
+sub description  {
+	my $self = shift;
+	return $self->{description} || $self->{pattern} || '(No description)';
+}
 sub matches {
 	my ($self, $description) = @_;
 	return if not defined $description;
@@ -501,11 +504,8 @@ sub matches {
 # Calculate the chance and points for the current task. 
 sub points {
 	my ($self, $task) = @_;
-	if ($self->matches($task->{description})) {
-		my $description = $self->{description} || $self->{pattern};
-		return ( $self->{chance}, $self->{points}, $description )
-	}
-	return;
+	return unless $self->matches($task->{description});
+	return ( $self->{chance}, $self->{points}, $self->description );
 }
 
 # Estimate the range of points and likelihoods for a task if it were to
