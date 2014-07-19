@@ -46,6 +46,7 @@ use warnings;
 use App::gp::Files;
 use Time::Piece;
 use Game::Plan::Revision;
+use Game::Plan::Timing;
 use Math::Random qw(random_poisson);
 use Safe::Isa;
 use File::Slurp;
@@ -640,7 +641,7 @@ sub init {
 	if (my $after = $self->{after}) {
 		# Make sure the after string parses
 		eval {
-			Game::Plan::Timing::parse_time($after);
+			Game::Plan::Timing::get_datetime($after);
 			1;
 		} or $self->die;
 		# Add a check subref
@@ -655,7 +656,7 @@ sub init {
 	if (my $before = $self->{before}) {
 		# make sure the before string parses
 		eval {
-			Game::Plan::Timing::parse_time($before);
+			Game::Plan::Timing::get_datetime($before);
 			1;
 		} or $self->die;
 		# Add a check subref
@@ -700,7 +701,7 @@ sub parse_when {
 		else {
 			# List on a given date. Make sure that the date parses, then add
 			# a simple comparison check.
-			my $every_date = eval { Game::Plan::Timing::parse_time($w) }
+			my $every_date = eval { Game::Plan::Timing::get_datetime($w) }
 				or $self->die;
 			$self->{list_checks} = sub {
 				my ($time, $day) = @_;
@@ -739,7 +740,7 @@ sub parse_when {
 			};
 		}
 		else {
-			my $next_date = eval { Game::Plan::Timing::parse_time($w) }
+			my $next_date = eval { Game::Plan::Timing::get_datetime($w) }
 				or $self->die;
 			$self->{list_checks} = sub {
 				my ($time, $day) = @_;
@@ -817,6 +818,7 @@ sub mark_as_completed {
 
 our @ISA = qw(Game::Plan::Rule);
 use Time::Piece;
+use Time::ParseDate;
 
 # Helps create rules that only apply during certain times of day
 # from => '8:30am', until => '12:30pm', limit => 30, points_per_min => 3
@@ -830,7 +832,7 @@ sub init {
 	$self->{until} ||= '23:59:59';
 	for my $arg (qw(from until)) {
 		eval {
-			$self->{$arg} = Game::Plan::Timing::parse_time($self->{$arg});
+			$self->{$arg} = Game::Plan::Timing::get_datetime($self->{$arg});
 			1;
 		} or $self->die;
 	}
