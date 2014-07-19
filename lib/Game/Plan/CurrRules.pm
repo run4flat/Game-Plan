@@ -902,7 +902,8 @@ sub points {
 	# Looks like we're giving points. Calculate the points, linear in the
 	# number of minutes.
 	my $seconds = $stop_time - $start_time;
-	$seconds = $self->{limit} * 60 if $seconds / 60 > $self->{limit};
+	my $limit_sec = parsedate($self->{limit}, $task->{start_time});
+	$seconds = $limit_sec if $seconds > $limit_sec;
 	my $points = int($seconds * $self->{points_per_minute} / 60);
 	
 	return (1, $points, $self->description);
