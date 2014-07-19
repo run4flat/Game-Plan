@@ -679,6 +679,8 @@ sub parse_when {
 	my $w = $self->{when};
 	return unless $w;
 	
+	# Note: if we couldn't find most recent day, then we impose no
+	# limitations
 	if ($w =~ s/^@//) {
 		if ($w =~ /^\d+$/) {
 			# repeat every N days; skip if we aren't on one of those days
@@ -687,7 +689,7 @@ sub parse_when {
 				my ($time, $day) = @_;
 				return if ($day - $most_recent_day) % $every_day_in_sec != 0;
 				return $curr_subref->($time, $day);
-			};
+			} if defined $most_recent_day;
 		}
 		elsif ($w =~ /^[MTWHFSU]+$/) {
 			# List on the given day of the week; skip if we aren't on one of
@@ -698,7 +700,7 @@ sub parse_when {
 				return if $every_week and -1 == index($every_week,
 						Game::Plan::Timing::letter_from_day($time));
 				return $curr_subref->($time, $day);
-			};
+			} if defined $most_recent_day;
 		}
 		else {
 			# List on a given date. Make sure that the date parses, then add
@@ -720,7 +722,7 @@ sub parse_when {
 				my ($time, $day) = @_;
 				return if $time < $most_recent_day + $refractory_period;
 				return $curr_subref->($time, $day);
-			};
+			} if defined $most_recent_day;
 		}
 		elsif ($w =~ /^[MTWHFSU]+$/) {
 			# Only list after a given weekday has passed since the last time
@@ -739,7 +741,7 @@ sub parse_when {
 				}
 				# Day hasn't passed, so this shouldn't be listed
 				return;
-			};
+			} if defined $most_recent_day;
 		}
 		else {
 			my $next_date = eval { Game::Plan::Timing::get_datetime($w) }
