@@ -45,9 +45,9 @@ sub stopstatus_options {
 	return [ stopstatus => hidden => {
 		one_of => [
 			[ 'finished|f', 'completed, award points' ],
-			[ 'paused|p', 'temporarily' ],
-			[ 'interupted|i', 'temporarily' ],
 			[ 'canceled|x', 'not going to finish, award sympathy points' ],
+			[ 'interupted|i', 'temporarily' ],
+			[ 'paused|p', 'temporarily' ],
 			[ 'postponed|t', 'will resume on a future date' ],
 		],
 	}];
