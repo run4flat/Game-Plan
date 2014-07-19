@@ -228,7 +228,7 @@ sub check {
 		# Add the stopstatus
 		my ($task, $options) = @args;
 		if (not exists $options->{stopstatus}) {
-			print "Stopping: $task->{description}\n";
+			print "Stopping: \"$task->{description}\"\n";
 			# Base the options for the stop prompt on the list of stop reasons from
 			# gp.pm.
 			@stop_options = map { $_->[0] } @{(App::gp->stopstatus_options)[0][2]{one_of}}
