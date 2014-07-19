@@ -165,21 +165,21 @@ sub find {
 	
 	# if a simple scalar (string) was supplied...
 	if (not ref($pattern)) {
-		while($i < @$self) {
-			return $self->[$i] if index($self->[$i]{description}, $pattern) > 0;
+		for my $task (@$self) {
+			return $task if index($task->{description}, $pattern) > 0;
 		}
 	}
 	# If a regex was supplied...
 	elsif (ref($pattern) eq ref(qr//)) {
-		while($i < @$self) {
-			return $self->[$i] if $self->[$i]{description} =~ $pattern;
+		for my $task (@$self) {
+			return $task if $task->{description} =~ $pattern;
 		}
 	}
 	# if it is a subroutine referece was given...
 	elsif (ref($pattern) eq ref(sub{})) {
-		while($i < @$self) {
-			local $_ = $self->[$i];
-			return $self->[$i] if $pattern->();
+		for (@$self) {
+			# Localized $_ to the member
+			return $_ if $pattern->();
 		}
 	}
 	# Otherwise I don't know what to do
