@@ -323,7 +323,7 @@ sub point_status {
 	
 	# Accumulate the chance and point contribution from each rule
 	my ($chance, $points) = (1, 0);
-	for my $rule (@{$self->{rules}}) {
+	for my $rule (@{$self->{tasks}}, @{$self->{rules}}) {
 		next unless my ($dchance, $dpoints, $rule_description)
 			= $rule->points($task);
 		$chance *= $dchance;
