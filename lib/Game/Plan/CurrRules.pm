@@ -262,6 +262,8 @@ sub check {
 		$failed++ unless $rule->check($action, @args);
 	}
 	return if $failed;
+	return 1 if $action ne 'stop';
+	return 1 unless $args[0]{finished} or $args[0]{canceled};
 	
 	# Score stopped tasks and return true. (The first argument to stop
 	# action is the task hashref)
