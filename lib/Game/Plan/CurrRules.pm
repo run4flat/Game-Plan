@@ -54,7 +54,7 @@ use File::Slurp;
 my @default_rule_parsers = (
 	# Tasks
 	sub {
-		return unless /^(\s*)\[(\d+| )\]/;
+		return unless /^(\s*)\[(\d+| |-)\]/;
 		my $entry = $_;
 		
 		# Capture the bracket position if the bracket is empty.
@@ -62,10 +62,12 @@ my @default_rule_parsers = (
 		$bracket_string = 'bracket_offset => ' . (length($1) + 1) . ', '
 			if $2 eq ' ';
 		
-		# Strip off the skip
-		$entry =~ s/^\s*\[(\d+| )\]//;
-		my $skip = $1;
-		$skip = 0 if $skip eq ' ';
+		# Determine the skip from the bracket contents
+		my $skip = $2;
+		$skip = 0 unless $skip =~ /\d/;
+		
+		# Strip off the brackets
+		$entry =~ s/^\s*\[[^\]]\]\s*//;
 		
 		# Pull off the command at the end
 		my $args = '';
@@ -75,8 +77,7 @@ my @default_rule_parsers = (
 		my $when = '';
 		$when = $1 if $entry =~ s/([@~]\S+)\s*$//;
 		
-		# Stip leading and trailing white space
-		$entry =~ s/^\s+//;
+		# Strip trailing white space
 		$entry =~ s/\s+$//;
 		
 		return "Game::Plan::Task->new(description => q{$entry}, "
