@@ -75,14 +75,14 @@ my @default_rule_parsers = (
 		
 		# Pull off the when
 		my $when = '';
-		$when = $1 if $entry =~ s/([@~]\S+)\s*$//;
+		$when = "when => '$1', " if $entry =~ s/([@~]\S+)\s*$//;
 		
 		# Strip trailing white space
 		$entry =~ s/\s+$//;
 		
 		return "Game::Plan::Task->new(description => q{$entry}, "
-			. $bracket_string
-			. "when => '$when', skip => $skip, defaults => \$defaults, $args)"
+			. $bracket_string . $when
+			. "skip => $skip, defaults => \$defaults, $args)"
 	},
 	# Rules
 	sub {
