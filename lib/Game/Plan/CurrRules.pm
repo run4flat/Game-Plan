@@ -346,7 +346,8 @@ sub points {
 	# Calculate points according to the poisson distribution for the given
 	# points, if the user is lucky enough to get them.
 	$task->{points} = 0;
-	$task->{points} = random_poisson($points) if rand > $chance;
+	$task->{points} = random_poisson(1, $points) if $chance > rand;
+	print "          $task->{points} points\n";
 	return $task->{points};
 }
 
