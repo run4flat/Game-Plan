@@ -171,7 +171,7 @@ sub find {
 	# if a simple scalar (string) was supplied...
 	if (not ref($pattern)) {
 		for my $task (@$self) {
-			return $task if index($task->{description}, $pattern) > 0;
+			return $task if $task->{description} eq $pattern;
 		}
 	}
 	# If a regex was supplied...
