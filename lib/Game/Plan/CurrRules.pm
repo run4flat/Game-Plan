@@ -154,7 +154,7 @@ sub parse_topic {
 		# Evaluate everything in the base package.
 		eval "package $package;\n$to_eval";
 		if ($@) {
-			warn "Failed to parse rule in $topic_file on line $.: $@";
+			warn "Failed to parse rule: $@";
 			return 1;
 		}
 		return 0;
