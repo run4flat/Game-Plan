@@ -82,6 +82,13 @@ sub active {
 	return $self->[0];
 }
 
+sub rename {
+	my ($self, $new_description) = @_;
+	return unless my $active = $self->active;
+	$active->{description} = $new_description;
+	return 1;
+}
+
 sub duration {
 	my ($self, $offset) = @_;
 	return if @$self <= $offset;
