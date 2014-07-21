@@ -168,6 +168,33 @@ sub push {
 	unshift @$self, $task if $task;
 }
 
+sub point_total {
+	my ($self, $start, $stop) = @_;
+	
+	# Assume that time sheet entries are sorted by stop time
+	my $total_points = 0;
+	for my $entry (@$self) {
+		# Skip tasks that started after our requested stop
+		next if $entry->{start_time} > $stop;
+		# Finished when this entry stops before our starting marker
+		last if $entry->{stop_time} < $start;
+		# Skip tasks that earned nothing
+		next unless $entry->{points};
+		
+		# Assign fractional points according to the amount of time in the
+		# given start/stop.
+		my $begin = $entry->{start_time};
+		$begin = $start if $begin < $start;
+		my $end = $entry->{stop_time};
+		$end = $stop if $end > $stop;
+		
+		$total_points += $entry->{points} * ($end - $begin)
+					/ ($entry->{stop_time} - $entry->{start_time});
+		
+	}
+	return $total_points;
+}
+
 # Find first task that matches the given pattern.
 sub find {
 	my ($self, $pattern, $start) = @_;

@@ -9,6 +9,8 @@ use warnings;
 use App::gp -command;
 use App::gp::Files;
 use Game::Plan::Timing;
+use Time::Piece;
+use Time::Seconds;
 
 sub opt_spec {
 	my $rules = App::gp->curr_rules;
@@ -57,7 +59,13 @@ sub execute {
 		print "You are not tracking any activity at the moment.\n";
 	}
 	
-	# Print out any other status stuff.
+	# Print out point totals for today
+	my $midnight = localtime;
+	$midnight -= $midnight->sec + $midnight->min * ONE_MINUTE
+				+ $midnight->hour * ONE_HOUR;
+	my $points_today = $tasks->point_total($midnight => scalar(localtime));
+	
+	print "Points earned today: $points_today\n";
 }
 
 1;
