@@ -623,15 +623,26 @@ sub init {
 	
 	# Find the most recent copy of this task in the backlog, if we need to
 	# know that.
-	if ($self->{when} or $self->{skip}) {
-		my $most_recent = App::gp->curr_tasks->find($self->{description});
-		if ($most_recent) {
-			$self->{most_recent_match} = $most_recent;
-			my $start = $most_recent->{start_time};
-			$self->{most_recent_day}
-				= $start - $start->sec - ONE_MINUTE * $start->min
-					- ONE_HOUR * $start->hour;
-		}
+	my ($most_recent, $most_recent_postponed) = App::gp->curr_tasks->find($self->{description});
+	if ($most_recent) {
+		$self->{most_recent_match} = $most_recent;
+		my $start = $most_recent->{start_time};
+		$self->{most_recent_day}
+			= $start - $start->sec - ONE_MINUTE * $start->min
+				- ONE_HOUR * $start->hour;
+	}
+	if ($most_recent_postponed) {
+		my $post_day = $most_recent_postponed->{start_time};
+		$post_day -= $post_day->sec + ONE_MINUTE * $post_day->min
+			+ ONE_HOUR * $post_day->hour;
+		
+		# Add a list check for most recent postpone
+		my $curr_subref = $self->{list_checks};
+		$self->{list_checks} = sub {
+			my ($time, $day) = @_;
+			return if $day == $post_day;
+			return $curr_subref->($time, $day);
+		};
 	}
 	
 	# Skip should just be digits

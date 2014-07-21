@@ -163,35 +163,50 @@ sub pop {
 	return shift(@$self);
 }
 
+sub push {
+	my ($self, $task) = @_;
+	unshift @$self, $task if $task;
+}
+
 # Find first task that matches the given pattern.
 sub find {
 	my ($self, $pattern, $start) = @_;
+	return unless defined $pattern;
+	
 	my $i = $start || 0;
+	
+	my ($postponed, $task, $eval_subref);
 	
 	# if a simple scalar (string) was supplied...
 	if (not ref($pattern)) {
-		for my $task (@$self) {
-			return $task if $task->{description} eq $pattern;
-		}
+		$eval_subref = sub { $pattern eq $task->{description} };
 	}
 	# If a regex was supplied...
 	elsif (ref($pattern) eq ref(qr//)) {
-		for my $task (@$self) {
-			return $task if $task->{description} =~ $pattern;
-		}
+		$eval_subref = sub { $task->{description} =~ $pattern };
 	}
-	# if it is a subroutine referece was given...
+	# if a subroutine referece was given...
 	elsif (ref($pattern) eq ref(sub{})) {
-		for (@$self) {
-			# Localized $_ to the member
-			return $_ if $pattern->();
-		}
+		$eval_subref = $pattern;
 	}
 	# Otherwise I don't know what to do
 	else {
 		croak("You must provide a string or regex ref as your pattern");
 	}
-	return;
+	
+	# Run through each item and check
+	for my $t (@$self) {
+		$task = $t;
+		if ($eval_subref->()) {
+			if ($task->{postponed} and not $postponed) {
+				$postponed = $task;
+			}
+			else {
+				return ($task, $postponed);
+			}
+		}
+	}
+	return (undef, $postponed);
 }
 
 1;
