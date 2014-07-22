@@ -190,13 +190,18 @@ sub point_total {
 		
 		# Assign fractional points according to the amount of time in the
 		# given start/stop.
-		my $begin = $entry->{start_time};
-		$begin = $start if $begin < $start;
-		my $end = $entry->{stop_time};
-		$end = $stop if $end > $stop;
-		
-		$total_points += $entry->{points} * ($end - $begin)
-					/ ($entry->{stop_time} - $entry->{start_time});
+		if ($entry->{stop_time} != $entry->{start_time}) {
+			my $begin = $entry->{start_time};
+			$begin = $start if $begin < $start;
+			my $end = $entry->{stop_time};
+			$end = $stop if $end > $stop;
+			
+			$total_points += $entry->{points} * ($end - $begin)
+						/ ($entry->{stop_time} - $entry->{start_time});
+		}
+		else {
+			$total_points += $entry->{points};
+		}
 		
 	}
 	return $total_points;
